@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="text/javascript" src="libs/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="libs/knockout-3.2.0.js"></script>
+  <style type="text/css">
+    .error-message {
+      color: #FF0000
+    }
+  </style>
+  <title>OchiMikan Record Debugger</title>
+  <script type="text/javascript">
+    $(function () {
+        function ViewModel() {
+            var self = this;
+
+            // properties
+            self.baseUrl = ko.observable('http://localhost:8080');
+            self.user     = ko.observable('');
+            self.password = ko.observable('');
+            self.score = ko.observable(0);
+            self.token = ko.observable('');
+            self.headerPart = ko.computed(function () {
+                var parts = self.token().split('.');
+                return parts.length > 0 ? window.atob(parts[0]) : '';
+            });
+            self.bodyPart = ko.computed(function () {
+                var parts = self.token().split('.');
+                return parts.length > 1 ? window.atob(parts[1]) : '';
+            });
+            self.signature = ko.computed(function () {
+                var parts = self.token().split('.');
+                return parts.length > 2 ? parts[2] : '';
+            });
+            self.errorMessage = ko.observable('');
+            self.postResponse = ko.observable('');
+
+            // behaviors
+            self.login = function () {
+                $.ajax({
+                    url:      self.baseUrl() + '/authenticate',
+                    dataType: 'text',
+                    headers: {
+                        'Authorization': 'Basic ' + encodeUserPass()
+                    }
+                }).done(function (response) {
+                    try {
+                        var result = JSON.parse(response);
+                        if ('token' in result) {
+                            self.token(result.token);
+                        } else {
+                            throw new Error('Response must contain "token"');
+                        }
+                        self.errorMessage('');
+                    } catch (err) {
+                        self.errorMessage('Invalid login server: ' + err);
+                    }
+                }).fail(function (_, _, status) {
+                    self.errorMessage('Failed to login: ' + error);
+                });
+            };
+            self.postScore = function () {
+                self.postResponse('');
+                $.ajax({
+                    url:         self.baseUrl() + '/records',
+                    type:        'POST',
+                    contentType: 'application/json',
+                    dataType:    'text',
+                    processData: false,
+                    data:        JSON.stringify({ score: self.score() }),
+                    headers: {
+                        'Authorization': 'Bearer ' + self.token()
+                    }
+                }).done(function (response) {
+                    self.postResponse(response);
+                    self.errorMessage('');
+                }).fail(function (_, _, error) {
+                    self.errorMessage('Failed to post score: ' + error);
+                });
+            };
+
+            // encodes User and Password for Basic Authentication
+            function encodeUserPass() {
+                return btoa(self.user() + ':' + self.password());
+            }
+        }
+        ko.applyBindings(new ViewModel());
+    });
+  </script>
+</head>
+<body>
+  <div class="login-form">
+    <form data-bind="submit: login">
+      <label for="user">User:</label>
+      <input type="text" id="user" data-bind="value: user">
+      <label for="password">Password:</label>
+      <input type="password" id="password" data-bind="value: password">
+      <input type="submit" value="Login">
+    </form>
+    <span class="error-message"
+          data-bind="text:    errorMessage,
+                     visible: errorMessage().length > 0"></span>
+  </div>
+ <div class="score-form">
+    <h4>Send Score</h4>
+    <form data-bind="submit: postScore">
+      <label for="score">
+      <input type="text" id="score" style="text-align: right"
+             data-bind="value: score">
+      <input type="submit">
+    </form>
+    <span data-bind="text: postResponse"></span>
+  </div>
+  <div class="login-token" data-bind="visible: token().length > 0">
+    <h4>Header</h4>
+    <span data-bind="text: headerPart"></span>
+    <h4>Body</h4>
+    <span data-bind="text: bodyPart"></span>
+    <h4>Signature</h4>
+    <span data-bind="text: signature"></span>
+  </div>
+</body>
+</html>
