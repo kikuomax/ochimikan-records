@@ -3,6 +3,7 @@ package com.herokuapp.ochimikan.records
 import akka.actor.Actor
 import akka.event.Logging
 import com.herokuapp.ochimikan.directives.{
+  LoggingDirectives,
   JwtClaimBuilder,
   JwtClaimVerifier,
   JwtDirectives,
@@ -79,13 +80,13 @@ class ServiceActor extends Actor with Service {
  *             Authentication is done by Basic authentication.
  * }}}
  */
-trait Service extends HttpService with JwtDirectives {
+trait Service extends HttpService with JwtDirectives with LoggingDirectives {
 
   // imports functions and conversions for JwtClaimBuilder and JwtClaimVerifier
   import JwtClaimBuilder._
   import JwtClaimVerifier._
 
-  /** The logger. */
+  /** The implicit logger. */
   val log: LoggingContext
 
   /** The implicit execution context of this service. */
@@ -105,71 +106,73 @@ trait Service extends HttpService with JwtDirectives {
     claimExpiration(tokenDuration)
 
   val route =
-    logRequest("debug", Logging.InfoLevel) {
-    path("") {
-      get {
-        respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
-          complete {
+    logAccess(Logging.InfoLevel) {
+      handleRejections(RejectionHandler.Default) {
+        path("") {
+          get {
+            respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
+              complete {
 <html>
   <body>
     <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>!</h1>
   </body>
 </html>
+              }
+            }
           }
-        }
-      }
-    } ~
-    path("authenticate") {
-      // an experimental authenticator
-      def authenticator(userpass: Option[UserPass]): Future[Option[UserPass]] =
-        Future {
-          userpass flatMap {
-            case up if up.user == "guest" && up.pass == "mikan" =>
-              log.info(s"event=login attempt\tuser=${up.user}\tresult=success")
-              Some(up)
-            case up =>
-              log.info(s"event=login attempt\tuser=${up.user}\tresult=failure")
-              None
-          }
-        }
+        } ~
+        path("authenticate") {
+          // an experimental authenticator
+          def authenticator(userpass: Option[UserPass]) =
+            Future {
+              userpass flatMap {
+                case up if up.user == "guest" && up.pass == "mikan" =>
+                  log.info(s"event=login attempt\tuser=${up.user}\tresult=success")
+                  Some(up)
+                case up =>
+                  log.info(s"event=login attempt\tuser=${up.user}\tresult=failure")
+                  None
+              }
+            }
 
-      authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) { token =>
-        respondWithMediaType(`application/json`) {
-          complete {
+          authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) { token =>
+            respondWithMediaType(`application/json`) {
+              complete {
 s"""{
   "token": "${token.serialize()}"
 }"""
+              }
+            }
           }
-        }
-      }
-    } ~
-    path("record") {
-      get {
-        complete {
+        } ~
+        path("record") {
+          get {
+            complete {
 <html>
   <body>
     Records
   </body>
 </html>
-        }
-      } ~
-      post {
-        def canRegisterScore(claim: JSONObject) =
-          Option(claim.get("sub")) flatMap {
-            case user: String => Some(user)
-            case _            => None
-          }
+            }
+          } ~
+          post {
+            def canRegisterScore(claim: JSONObject) =
+              Option(claim.get("sub")) flatMap {
+                case user: String => Some(user)
+                case _            => None
+              }
 
-        authorizeToken(verifyNotExpired && canRegisterScore) { user =>
-          complete {
+            authorizeToken(verifyNotExpired && canRegisterScore) { user =>
+              complete {
 <html>
   <body>
     {user}'s record updated.
   </body>
 </html>
+              }
+            }
           }
         }
       }
-    }
     }
 }
