@@ -9,6 +9,7 @@ import com.herokuapp.ochimikan.directives.{
   JwtDirectives,
   JwtSignature
 }
+import com.herokuapp.ochimikan.json.JwtJson
 import com.nimbusds.jose.{
   JWSAlgorithm,
   JWSObject
@@ -27,6 +28,7 @@ import spray.routing.authentication.{
 }
 import spray.http._
 import MediaTypes._
+import spray.httpx.SprayJsonSupport
 import spray.util.LoggingContext
 
 // we don't implement our route structure directly in the service actor because
@@ -80,7 +82,7 @@ class ServiceActor extends Actor with Service {
  *             Authentication is done by Basic authentication.
  * }}}
  */
-trait Service extends HttpService with JwtDirectives with LoggingDirectives {
+trait Service extends HttpService with SprayJsonSupport with JwtDirectives with LoggingDirectives with JwtJson {
 
   // imports functions and conversions for JwtClaimBuilder and JwtClaimVerifier
   import JwtClaimBuilder._
@@ -135,14 +137,8 @@ trait Service extends HttpService with JwtDirectives with LoggingDirectives {
               }
             }
 
-          authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) { token =>
-            respondWithMediaType(`application/json`) {
-              complete {
-s"""{
-  "token": "${token.serialize()}"
-}"""
-              }
-            }
+          authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) {
+            complete(_)
           }
         } ~
         path("record") {
