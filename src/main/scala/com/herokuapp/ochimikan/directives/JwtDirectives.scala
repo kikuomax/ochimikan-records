@@ -76,6 +76,11 @@ trait JwtDirectives {
    * {{{
    * Authorization: Bearer JWT
    * }}}
+   *
+   * Takes arguments like the following,
+   * {{{
+   * authorizeToken[T](privilege: JSONObject => Option[T])(implicit verifier: JWSObject => Option[JSONObject]): Directive1[T]
+   * }}}
    */
   def authorizeToken[T](magnet: JwtAuthorizationMagnet[T]): Directive1[T] = {
     val prefix = "Bearer "
