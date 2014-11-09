@@ -1,4 +1,4 @@
-package com.herokuapp.ochimikan.records
+package com.herokuapp.ochimikan.records.service
 
 import akka.actor.Actor
 import akka.event.Logging
@@ -10,6 +10,14 @@ import com.herokuapp.ochimikan.directives.{
   JwtSignature
 }
 import com.herokuapp.ochimikan.json.JwtJson
+import com.herokuapp.ochimikan.records.{
+  Score,
+  ScoreList
+}
+import com.herokuapp.ochimikan.records.json.{
+  ScoreJson,
+  ScoreListJson
+}
 import com.nimbusds.jose.{
   JWSAlgorithm,
   JWSObject
@@ -21,14 +29,15 @@ import scala.concurrent.{
 }
 import scala.concurrent.duration.DurationInt
 import scala.language.implicitConversions
+import spray.http._
+import MediaTypes._
+import spray.httpx.SprayJsonSupport
+import spray.json.CollectionFormats
 import spray.routing._
 import spray.routing.authentication.{
   BasicAuth,
   UserPass
 }
-import spray.http._
-import MediaTypes._
-import spray.httpx.SprayJsonSupport
 import spray.util.LoggingContext
 
 // we don't implement our route structure directly in the service actor because
@@ -59,30 +68,88 @@ class ServiceActor extends Actor with Service {
  * ===Listing high scores===
  *
  *  1. A user GETs a list of high scores from an `OchiMikan Records`.
- *  2. The `OchiMikan Records` queries a `Score DB` for a list of high scores.
- *  3. The `OchiMikan Records` returns the list of high scores to the user.
+ *  1. The `OchiMikan Records` queries a `Score DB` for a list of high scores.
+ *  1. The `OchiMikan Records` returns the list of high scores to the user.
  *
  * ===Registering a score===
  *
  *  1. A user POSTs his/her score to an `OchiMikan Records`.
- *  2. The `OchiMikan Records` verifies the user's privilege for posting a
+ *  1. The `OchiMikan Records` verifies the user's privilege for posting a
  *     score.
- *  3. The `OchiMikan Records` inserts the score into a `Score DB`.
+ *  1. The `OchiMikan Records` inserts the score into a `Score DB`.
  *
  * ==RESTful API==
  *
- * The following paths are available,
- * {{{
- *     /record
- *       GET   Returns a list of records.
- *       POST  Records a specified score.
+ * ===GET /record===
  *
- *     /authenticate
- *       GET   Does authentication and returns an authorized token.
- *             Authentication is done by Basic authentication.
+ * Returns a list of scores.
+ *
+ * ====Response====
+ *
+ * A JSON object which contains an array of scores.
+ * It will be similar to the following,
+ * {{{
+ * {
+ *   "scores": [
+ *     {
+ *       "value":  300,
+ *       "level":  2,
+ *       "player": "player",
+ *       "date":   1415549555
+ *     },
+ *     ...
+ *   ]
+ * }
  * }}}
+ * `scores` is an array of `score object`s.
+ * They are sorted in descending order.
+ *
+ * A `score object` has properties `value`, `level`, `player` and `date`.
+ *
+ * `value` is the value of the score. An integer >= 0.
+ *
+ * `level` is the level at which the score was achieved. An integer >= 1.
+ *
+ * `player` is the name of the player who achieved the score. A string.
+ *
+ * `date` is the date when the score was achieved.
+ * The number of seconds since January 1, 1970, 00:00:00 GMT. 
+ *
+ * ===POST /record===
+ *
+ * Records a specified score.
+ *
+ * ====Entity====
+ *
+ * A JSON object which represents the score to be recorded.
+ * It will be similar to the following,
+ * {{{
+ * {
+ *   "value":  300,
+ *   "level":  2,
+ *   "player": "player",
+ *   "date":   1415549555
+ * }
+ * }}}
+ * `value`, `level`, `player` and `date` corresponds to those of `GET /record`.
+ *
+ * ===GET /authenticate===
+ *
+ * Does Basic authentication and returns an authorized token.
+ *
+ * ====Response====
+ *
+ * A JSON object which contains a signed JSON Web Token (JWT).
+ * It will be similar to the following,
+ * {{{
+ * {
+ *   "token": "1234ABC..."
+ * }
+ * }}}
+ * `token` is a signed JWT. A string.
+ *
  */
-trait Service extends HttpService with SprayJsonSupport with JwtDirectives with LoggingDirectives with JwtJson {
+trait Service extends HttpService with SprayJsonSupport with CollectionFormats with JwtDirectives with LoggingDirectives with JwtJson with ScoreJson with ScoreListJson {
 
   // imports functions and conversions for JwtClaimBuilder and JwtClaimVerifier
   import JwtClaimBuilder._
@@ -144,11 +211,11 @@ trait Service extends HttpService with SprayJsonSupport with JwtDirectives with 
         path("record") {
           get {
             complete {
-<html>
-  <body>
-    Records
-  </body>
-</html>
+              ScoreList(Seq(
+                Score(10000, 11, "Player A", new java.util.Date()),
+                Score( 9900, 10, "Player A", new java.util.Date()),
+                Score( 5200,  7, "Player B", new java.util.Date())
+              ))
             }
           } ~
           post {
@@ -159,12 +226,15 @@ trait Service extends HttpService with SprayJsonSupport with JwtDirectives with 
               }
 
             authorizeToken(verifyNotExpired && canRegisterScore) { user =>
-              complete {
-<html>
-  <body>
-    {user}'s record updated.
-  </body>
-</html>
+              entity(as[Score]) { score =>
+                complete {
+                  ScoreList(Seq(
+                    Score(10000, 11, "Player A", new java.util.Date()),
+                    Score( 9900, 10, "Player A", new java.util.Date()),
+                    Score( 5200,  7, "Player B", new java.util.Date()),
+                    score
+                  ))
+                }
               }
             }
           }

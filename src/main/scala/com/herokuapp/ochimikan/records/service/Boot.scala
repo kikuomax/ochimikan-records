@@ -1,4 +1,4 @@
-package com.herokuapp.ochimikan.records
+package com.herokuapp.ochimikan.records.service
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO

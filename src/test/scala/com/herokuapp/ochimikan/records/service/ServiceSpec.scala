@@ -1,12 +1,17 @@
-package com.herokuapp.ochimikan.records
+package com.herokuapp.ochimikan.records.service
 
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http._
 import StatusCodes._
+import spray.util.LoggingContext
 
 class ServiceSpec extends Specification with Specs2RouteTest with Service {
   def actorRefFactory = system
+
+  override lazy val log = implicitly[LoggingContext]
+
+  override implicit lazy val executionContext = system.dispatcher
   
   "Service" should {
 

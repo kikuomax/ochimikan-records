@@ -19,7 +19,8 @@
             self.baseUrl = ko.observable('http://localhost:8080');
             self.user     = ko.observable('');
             self.password = ko.observable('');
-            self.score = ko.observable(0);
+            self.score  = ko.observable(0);
+            self.scores = ko.observableArray([]);
             self.token = ko.observable('');
             self.headerPart = ko.computed(function () {
                 var parts = self.token().split('.');
@@ -60,21 +61,55 @@
                     self.errorMessage('Failed to login: ' + error);
                 });
             };
+            self.getScores = function () {
+                $.ajax({
+                    url:         self.baseUrl() + '/record',
+                    type:        'GET',
+                    dataType:    'text',
+                    processData: false,
+                    headers:     authorizationHeader()
+                }).done(function (response) {
+                    // `response` must be a score list object
+                    // and updates `scores` with it
+                    try {
+                        var scoreList = JSON.parse(response);
+                        updateScores(scoreList.scores);
+                        self.errorMessage('');
+                    } catch(err) {
+                        self.errorMessage('Invalid scores: ' + err);
+                        console.error(err);
+                    }
+                }).fail(function (_, _, error) {
+                    self.errorMessage('Failed to request scores: ' + error);
+                });
+            };
             self.postScore = function () {
                 self.postResponse('');
+                var data = {
+                    value:  Number(self.score()),
+                    level:  1,
+                    player: "Player A",
+                    date:   Math.round(new Date().getTime() / 1000)
+                };
                 $.ajax({
-                    url:         self.baseUrl() + '/records',
+                    url:         self.baseUrl() + '/record',
                     type:        'POST',
                     contentType: 'application/json',
                     dataType:    'text',
                     processData: false,
-                    data:        JSON.stringify({ score: self.score() }),
-                    headers: {
-                        'Authorization': 'Bearer ' + self.token()
-                    }
+                    data:        JSON.stringify(data),
+                    headers:     authorizationHeader()
                 }).done(function (response) {
-                    self.postResponse(response);
-                    self.errorMessage('');
+                    // response must be a score list object
+                    // and updates `scores` with it
+                    try {
+                        var scoreList = JSON.parse(response);
+                        updateScores(scoreList.scores);
+                        self.errorMessage('');
+                    } catch(err) {
+                        self.errorMessage('Invalid scores: ' + err);
+                        console.error(err);
+                    }
                 }).fail(function (_, _, error) {
                     self.errorMessage('Failed to post score: ' + error);
                 });
@@ -83,6 +118,19 @@
             // encodes User and Password for Basic Authentication
             function encodeUserPass() {
                 return btoa(self.user() + ':' + self.password());
+            }
+
+            // returns an authorization header
+            function authorizationHeader() {
+                return { 'Authorization': 'Bearer ' + self.token() };
+            }
+
+            // updates the score list
+            function updateScores(scores) {
+                self.scores.removeAll();
+                scores.forEach(function (score) {
+                    self.scores.push(score);
+                });
             }
         }
         ko.applyBindings(new ViewModel());
@@ -111,6 +159,24 @@
       <input type="submit">
     </form>
     <span data-bind="text: postResponse"></span>
+  </div>
+  <div class="score-list">
+    <form data-bind="submit: getScores">
+      <input type="submit" value="Reload">
+    </form>
+    <table>
+      <thead>
+        <tr><th>Score</th><th>Level</th><th>Player</th><th>Date</th></tr>
+      </thead>
+      <tbody data-bind="foreach: scores">
+        <tr>
+          <td data-bind="text: value"></td>
+          <td data-bind="text: level"></td>
+          <td data-bind="text: player"></td>
+          <td data-bind="text: date"></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   <div class="login-token" data-bind="visible: token().length > 0">
     <h4>Header</h4>
