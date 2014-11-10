@@ -11,6 +11,7 @@ import com.herokuapp.ochimikan.directives.{
 }
 import com.herokuapp.ochimikan.json.JwtJson
 import com.herokuapp.ochimikan.records.{
+  Query,
   Score,
   ScoreList
 }
@@ -161,6 +162,16 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
   /** The implicit execution context of this service. */
   implicit val executionContext: ExecutionContext
 
+  /** The query object for the database contents. */
+  val query: Query = new Query {
+    val client = com.mongodb.casbah.MongoClient("localhost", 27017)
+
+    def resolveDatabase(implicit executionContext:ExecutionContext) =
+      Future {
+        new com.herokuapp.ochimikan.records.mongo.Database(client)
+      }
+  }
+
   // imports implicit signer and verifier in the scope
   private val jwtSignature = JwtSignature(JWSAlgorithm.HS256, "60f6244c747525041003566630a49fe5d3ae5a90c7c59194c5016164d32346504017a7f58e5ff9abc37ba561b3c3bfd1b0f6b4323b5b4e9bef8285b105decff7")
   import jwtSignature._
@@ -209,13 +220,10 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
           }
         } ~
         path("record") {
+          val dbQuery = query.Database()
           get {
-            complete {
-              ScoreList(Seq(
-                Score(10000, 11, "Player A", new java.util.Date()),
-                Score( 9900, 10, "Player A", new java.util.Date()),
-                Score( 5200,  7, "Player B", new java.util.Date())
-              ))
+            onSuccess(dbQuery.scores.?) {
+              complete(_)
             }
           } ~
           post {
@@ -227,13 +235,9 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
 
             authorizeToken(verifyNotExpired && canRegisterScore) { user =>
               entity(as[Score]) { score =>
-                complete {
-                  ScoreList(Seq(
-                    Score(10000, 11, "Player A", new java.util.Date()),
-                    Score( 9900, 10, "Player A", new java.util.Date()),
-                    Score( 5200,  7, "Player B", new java.util.Date()),
-                    score
-                  ))
+                onSuccess(dbQuery.?) { db =>
+                  db.addScore(score)
+                  complete(db.scores)
                 }
               }
             }

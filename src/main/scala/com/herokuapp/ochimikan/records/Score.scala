@@ -2,23 +2,38 @@ package com.herokuapp.ochimikan.records
 
 import java.util.Date
 
-/**
- * A score.
- *
- * @constructor
- * @param value
- *     The value of this score.
- * @param level
- *     The level at which this score was achieved.
- * @param player
- *     The name of the player who achieved this score.
- * @param date
- *     The date when this score was achieved.
- */
-case class Score(value: Int, level: Int, player: String, date: Date)
+/** A score. */
+trait Score {
+  /** The value of this score. */
+  def value: Int
+
+  /** The level at which this score was achieved. */
+  def level: Int
+
+  /** The name of the player who achieved this score. */
+  def player: String
+
+  /** The date when this score was achieved. */
+  def date: Date
+}
 
 /** Companion object of [[Score]]. */
 object Score {
+  /**
+   * Creates an instance of [[Score]] of specified properties.
+   *
+   * @param value
+   *     The value of the score.
+   * @param level
+   *     The level at which the score was achieved.
+   * @param player
+   *     The name of the player who achieved the score.
+   * @param date
+   *     The date when the score was achieved.
+   */
+  def apply(value: Int, level: Int, player: String, date: Date): Score =
+    RawScore(value, level, player, date)
+
   /** Orders [[Score]]s by values. */
   implicit object ScoreOrdering extends Ordering[Score] {
     /**
@@ -56,3 +71,19 @@ object Score {
     }
   }
 }
+
+/**
+ * The direct implementation of [[Score]].
+ *
+ * @constructor
+ * @param value
+ *     The value of this score.
+ * @param level
+ *     The level at which this score was achieved.
+ * @param player
+ *     The name of the player who achieved this score.
+ * @param date
+ *     The date when this score was achieved.
+ */
+case class RawScore(value: Int, level: Int, player: String, date: Date)
+  extends Score
