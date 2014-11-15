@@ -4,7 +4,7 @@ name          := "ochimikan-record"
 
 version       := "0.0.1"
 
-scalaVersion  := "2.11.2"
+scalaVersion  := "2.11.4"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -20,7 +20,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-testkit"    % akkaV % "test",
     "org.specs2"        %% "specs2-core"     % "2.3.13" % "test",
     "com.nimbusds"      %  "nimbus-jose-jwt" % "3.2",
-    "org.mongodb"       %% "casbah-core"     % "2.7.3"
+    "org.mongodb"       %% "casbah-core"     % "2.7.3",
+    "com.typesafe"      %  "config"          % "1.2.1"
   )
 }
 

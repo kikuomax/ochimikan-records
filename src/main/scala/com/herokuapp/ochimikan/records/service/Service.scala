@@ -43,8 +43,18 @@ import spray.util.LoggingContext
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
-class ServiceActor extends Actor with Service {
-
+/**
+ * An `Actor` which provides [[Service]].
+ *
+ * @constructor
+ * @param settings
+ *     The settings of the service.
+ * @param query
+ *     The query object for database components.
+ */
+class ServiceActor(override val settings: Settings, override val query: Query)
+  extends Actor with Service
+{
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
   def actorRefFactory = context
@@ -151,7 +161,6 @@ class ServiceActor extends Actor with Service {
  *
  */
 trait Service extends HttpService with SprayJsonSupport with CollectionFormats with JwtDirectives with LoggingDirectives with JwtJson with ScoreJson with ScoreListJson {
-
   // imports functions and conversions for JwtClaimBuilder and JwtClaimVerifier
   import JwtClaimBuilder._
   import JwtClaimVerifier._
@@ -162,18 +171,15 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
   /** The implicit execution context of this service. */
   implicit val executionContext: ExecutionContext
 
-  /** The query object for the database contents. */
-  val query: Query = new Query {
-    val client = com.mongodb.casbah.MongoClient("localhost", 27017)
+  /** The settings of the service. */
+  val settings: Settings
 
-    def resolveDatabase(implicit executionContext:ExecutionContext) =
-      Future {
-        new com.herokuapp.ochimikan.records.mongo.Database(client)
-      }
-  }
+  /** The query object for the database contents. */
+  val query: Query
 
   // imports implicit signer and verifier in the scope
-  private val jwtSignature = JwtSignature(JWSAlgorithm.HS256, "60f6244c747525041003566630a49fe5d3ae5a90c7c59194c5016164d32346504017a7f58e5ff9abc37ba561b3c3bfd1b0f6b4323b5b4e9bef8285b105decff7")
+  private val jwtSignature =
+    JwtSignature(JWSAlgorithm.HS256, settings.secretKey)
   import jwtSignature._
 
   // valid duration of a JWT
