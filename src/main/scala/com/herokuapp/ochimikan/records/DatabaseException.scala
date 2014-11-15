@@ -25,6 +25,15 @@ object DatabaseException {
   /**
    * Constructs a [[DatabaseException]].
    *
+   * @param cause
+   *     The root cause of the exception.
+   */
+  def apply(cause: Throwable): DatabaseException =
+    this(cause.getMessage(), cause)
+
+  /**
+   * Constructs a [[DatabaseException]].
+   *
    * @param message
    *     The brief explanation of the exception.
    * @param cause

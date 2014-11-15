@@ -22,9 +22,9 @@ class ScoreList(private[mongo] val database: Database)
    *     If scores in the database are corrupted.
    */
   override def scores: Seq[Score] =
-    try
+    try {
       database.scoreCollection.find().map { new Score(_) }.toVector
-    catch {
+    } catch {
       case e @ (_ : ClassCastException | _ : IllegalArgumentException) =>
         throw DatabaseException(e.getMessage(), e)
     }

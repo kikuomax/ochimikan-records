@@ -2,6 +2,7 @@ package com.herokuapp.ochimikan
 package records
 package mongo
 
+import com.mongodb.MongoException
 import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.commons.MongoDBObject
 
@@ -33,10 +34,14 @@ class Database(client: MongoClient) extends records.Database {
    *     If scores in the database are corrupted.
    */
   override def addScore(score: records.Score) =
-    scoreCollection.insert(MongoDBObject(
-      "value"  -> score.value,
-      "level"  -> score.level,
-      "player" -> score.player,
-      "date"   -> score.date
-    ))
+    try {
+      scoreCollection.insert(MongoDBObject(
+        "value"  -> score.value,
+        "level"  -> score.level,
+        "player" -> score.player,
+        "date"   -> score.date
+      ))
+    } catch {
+      case e: MongoException => throw DatabaseException(e)
+    }
 }
