@@ -27,11 +27,8 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings missing the secretKey, ${missingSecretKey}
   Should throw ConfigException.Missing  ${expectMissing(missingSecretKey)}
 
-  The following Settings missing the mongo.name, ${missingMongoName}
-  Should throw ConfigException.Missing  ${expectMissing(missingMongoName)}
-
-  The following Settings missing the mongo.port, ${missingMongoPort}
-  Should throw ConfigException.Missing  ${expectMissing(missingMongoPort)}
+  The following Settings missing the mongo-uri, ${missingMongoUri}
+  Should throw ConfigException.Missing  ${expectMissing(missingMongoUri)}
 
   The following Settings with a wrong host.name, ${wrongHostName}
   Should throw ConfigException.WrongType  ${expectWrongType(wrongHostName)}
@@ -42,11 +39,8 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings with a wrong secretKey, ${wrongSecretKey}
   Should throw ConfigException.WrongType  ${expectWrongType(wrongSecretKey)}
 
-  The following Settings with a wrong mongo.name, ${wrongMongoName}
-  Should throw ConfigException.WrongType  ${expectWrongType(wrongMongoName)}
-
-  The following Settings with a wrong mongo.port, ${wrongMongoPort}
-  Should throw ConfigException.WrongType  ${expectWrongType(wrongMongoPort)}
+  The following Settings with a wrong mongo-uri, ${wrongMongoUri}
+  Should throw ConfigException.WrongType  ${expectWrongType(wrongMongoUri)}
 
   The following Settings with an empty host.name, ${emptyHostName}
   Should throw ConfigException.BadValue  ${expectBadValue(emptyHostName)}
@@ -60,14 +54,8 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings with an empty secretKey, ${emptySecretKey}
   Should throw ConfigException.BadValue  ${expectBadValue(emptySecretKey)}
 
-  The following Settings with an empty mongo.name, ${emptyMongoName}
-  Should throw ConfigException.BadValue  ${expectBadValue(emptyMongoName)}
-
-  The following Settings with mongo.port = 0, ${mongoPort0}
-  Should throw ConfigException.BadValue  ${expectBadValue(mongoPort0)}
-
-  The following Settings with mongo.port = 65536, ${mongoPort65536}
-  Should throw ConfigException.BadValue  ${expectBadValue(mongoPort65536)}
+  The following Settings with a bad mongo-uri, ${badMongoUri}
+  Should throw ConfigException.BadValue  ${expectBadValue(badMongoUri)}
 """
 
   // Tests specified settings have expected values.
@@ -75,9 +63,8 @@ class SettingsSpec extends Specification { def is = s2"""
 have hostName  = ${settings.hostName}            ${settings.expectHostName}
 have hostPort  = ${settings.hostPort.toString}   ${settings.expectHostPort}
 have secretKey = ${settings.secretKey}           ${settings.expectSecretKey}
-have mongoName = ${settings.mongoName}           ${settings.expectMongoName}
-have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
-  """
+have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
+"""
 
   // Expects a ConfigException.Missing thrown
   def expectMissing(config: String) =
@@ -98,14 +85,12 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }""",
     hostName  = "127.0.0.1",
     hostPort  = 9090,
     secretKey = "xyz123",
-    mongoName = "127.0.0.1",
-    mongoPort = 27017
+    mongoUri  = "mongodb://127.0.0.1:27017/"
   )
 
   val valid2 = ValidSettings("""
@@ -113,14 +98,12 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = records.ochimikan.com
       host.port  = 4649
       secretKey  = MikanSecret
-      mongo.name = mongo.ochimikan.com
-      mongo.port = 11029
+      mongo-uri  = "mongodb://mongo.ochimikan.com:11029/"
     }""",
     hostName  = "records.ochimikan.com",
     hostPort  = 4649,
     secretKey = "MikanSecret",
-    mongoName = "mongo.ochimikan.com",
-    mongoPort = 11029
+    mongoUri  = "mongodb://mongo.ochimikan.com:11029/"
   )
 
   val missingRoot = """
@@ -128,48 +111,35 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
  
   val missingHostName = """
     com.herokuapp.ochimikan.records.service {
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
  
   val missingHostPort = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
  
   val missingSecretKey = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
  
-  val missingMongoName = """
+  val missingMongoUri = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
-      mongo.port = 27017
-    }"""
-
-  val missingMongoPort = """
-    com.herokuapp.ochimikan.records.service {
-      host.name  = 127.0.0.1
-      host.port  = 9090
-      secretKey  = xyz123
-      mongo.name = 127.0.0.1
     }"""
 
   val wrongHostName = """
@@ -177,8 +147,7 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = [ localhost ]
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val wrongHostPort = """
@@ -186,8 +155,7 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = PORT
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val wrongSecretKey = """
@@ -195,26 +163,15 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = { value = secret }
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
-  val wrongMongoName = """
+  val wrongMongoUri = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = [ 127.0.0.1 ]
-      mongo.port = 27017
-    }"""
-
-  val wrongMongoPort = """
-    com.herokuapp.ochimikan.records.service {
-      host.name  = 127.0.0.1
-      host.port  = 9090
-      secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = [ 27017 ]
+      mongo-uri  = { uri = "mongodb://127.0.0.1:27017" }
     }"""
 
   val emptyHostName = """
@@ -222,8 +179,7 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = ""
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val hostPort0 = """
@@ -231,8 +187,7 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 0
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val hostPort65536 = """
@@ -240,8 +195,7 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 65536
       secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val emptySecretKey = """
@@ -249,35 +203,15 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = ""
-      mongo.name = 127.0.0.1
-      mongo.port = 27017
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
-  val emptyMongoName = """
+  val badMongoUri = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
-      mongo.name = ""
-      mongo.port = 27017
-    }"""
-
-  val mongoPort0 = """
-    com.herokuapp.ochimikan.records.service {
-      host.name  = 127.0.0.1
-      host.port  = 9090
-      secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 0
-    }"""
-
-  val mongoPort65536 = """
-    com.herokuapp.ochimikan.records.service {
-      host.name  = 127.0.0.1
-      host.port  = 9090
-      secretKey  = xyz123
-      mongo.name = 127.0.0.1
-      mongo.port = 65536
+      mongo-uri  = "127.0.0.1:27017"
     }"""
 
   /** A valid settings. */
@@ -286,15 +220,13 @@ have mongoPort = ${settings.mongoPort.toString}  ${settings.expectMongoPort}
     hostName: String,
     hostPort: Int,
     secretKey: String,
-    mongoName: String,
-    mongoPort: Int)
+    mongoUri: String)
   {
     val settings = new Settings(ConfigFactory.parseString(config))
     // expectations
-    def expectHostName  = settings.hostName  must_== hostName
-    def expectHostPort  = settings.hostPort  must_== hostPort
+    def expectHostName  = settings.hostName must_== hostName
+    def expectHostPort  = settings.hostPort must_== hostPort
     def expectSecretKey = settings.secretKey must_== secretKey
-    def expectMongoName = settings.mongoName must_== mongoName
-    def expectMongoPort = settings.mongoPort must_== mongoPort
+    def expectMongoUri  = settings.mongoUri.getURI() must_== mongoUri
   }
 }

@@ -1,5 +1,6 @@
 package com.herokuapp.ochimikan.records.service
 
+import com.mongodb.MongoClientURI
 import com.typesafe.config.{
   Config,
   ConfigException
@@ -13,8 +14,7 @@ import com.typesafe.config.{
  *  - `host.name`
  *  - `host.port`
  *  - `secretKey`
- *  - `mongo.name`
- *  - `mongo.port`
+ *  - `mongo-uri`
  *
  * Please refer to `resources/application.conf` for how to describe
  * a configuration.
@@ -29,16 +29,13 @@ import com.typesafe.config.{
  *     - If `host.name` is not a string,
  *     - or if `host.port` is not an integer,
  *     - or if `secretKey` cannot be a string,
- *     - or if `mongo.name` is not a string,
- *     - or if `mongo.port` is not an integer.
+ *     - or if `mongo-uri` is not a string.
  * @throws ConfigException.BadValue
  *     - If `host.name` is empty,
  *     - or if `host.port` is <= 0,
  *     - or if `host.port` is >= 65536,
  *     - or if `secretKey` is empty,
- *     - or if `mongo.name` is empty,
- *     - or if `mongo.port` is <= 0,
- *     - or if `mongo.port` is >= 65536.
+ *     - or if `mongo-uri` is not an acceptable MongoDB URI.
  */
 class Settings(config: Config) {
   private val subconfig =
@@ -63,16 +60,10 @@ class Settings(config: Config) {
   val secretKey: String = getNonEmpty("secretKey")
 
   /**
-   * The host name or IP of the MongoDB.
-   * Associated with the key `mongo.name`. Non-empty.
+   * The MongoDB URI of the MongoDB server.
+   * Associated with the key `mongo-uri`.
    */
-  val mongoName: String = getNonEmpty("mongo.name")
-
-  /**
-   * The port on which the MongoDB is waiting for connections.
-   * Associated with the key `mongo.port`. [1..65535].
-   */
-  val mongoPort: Int = getPort("mongo.port")
+  val mongoUri: MongoClientURI = getMongoUri("mongo-uri")
 
   /**
    * Obtains a non-empty string value.
@@ -109,5 +100,24 @@ class Settings(config: Config) {
       throw new ConfigException.BadValue(subconfig.origin(), key,
         s"$key must be in [1, 65535] but $port")
     port
+  }
+
+  /**
+   * Obtains a MongoDB URI.
+   *
+   * @throws ConfigException.Missing
+   *     If `key` does not exist.
+   * @throws ConfigException.WrongType
+   *     If the value associated with `key` is not a string.
+   * @throws ConfigException.BadValue
+   *     If the string associated with `key` is not an acceptable MongoDB URI.
+   */
+  private def getMongoUri(key: String): MongoClientURI = {
+    try {
+      new MongoClientURI(subconfig.getString(key))
+    } catch {
+      case e: IllegalArgumentException =>
+        throw new ConfigException.BadValue(subconfig.origin(), key, e.getMessage())
+    }
   }
 }

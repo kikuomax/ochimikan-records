@@ -24,7 +24,7 @@ object Boot extends App {
 
   // the query object for database components
   private val query: Query = new Query {
-    val client = MongoClient(settings.mongoName, settings.mongoPort)
+    val client = MongoClient(settings.mongoUri)
 
     def resolveDatabase(implicit executionContext:ExecutionContext) =
       Future { new mongo.Database(client) }
