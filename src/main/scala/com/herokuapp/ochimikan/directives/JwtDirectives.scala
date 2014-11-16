@@ -242,7 +242,7 @@ trait JwtClaimBuilder[T] extends (T => Option[JSONObject]) { self =>
     }
 }
 
-/** Companion object of [[JwtClaimBuilderChain]]. */
+/** Companion object of [[JwtClaimBuilder]]. */
 object JwtClaimBuilder {
   /**
    * Returns a claim builder which sets the "exp" field to an expiration time.
