@@ -15,6 +15,11 @@ import com.typesafe.config.{
  *  - `host.port`
  *  - `secretKey`
  *  - `mongo-uri`
+ *  - `db-name` (optional)
+ *
+ * If `db-name` is omitted, the database name must be included in `mongo-uri`.
+ * If database names are specified in both `mongo-uri` and `db-name`, the name
+ * in `mongo-uri` will be adopted.
  *
  * Please refer to `resources/application.conf` for how to describe
  * a configuration.
@@ -24,12 +29,14 @@ import com.typesafe.config.{
  *     The configuration to be loaded.
  * @throws ConfigException.Missing
  *     - If `com.herokuapp.ochimikan.records.service` does not exist,
- *     - or if one or more of the keys do not exist in `config`.
+ *     - or if one or more of the necessary keys do not exist in `config`,
+ *     - or if the database name is in neither `mongo-uri` nor `db-name`.
  * @throws ConfigException.WrongType
  *     - If `host.name` is not a string,
  *     - or if `host.port` is not an integer,
  *     - or if `secretKey` cannot be a string,
- *     - or if `mongo-uri` is not a string.
+ *     - or if `mongo-uri` is not a string,
+ *     - or if `db-name` is specified but not a string.
  * @throws ConfigException.BadValue
  *     - If `host.name` is empty,
  *     - or if `host.port` is <= 0,
@@ -64,6 +71,12 @@ class Settings(config: Config) {
    * Associated with the key `mongo-uri`.
    */
   val mongoUri: MongoClientURI = getMongoUri("mongo-uri")
+
+  /**
+   * The name of the database to connect to.
+   * Associated with the key `db-name`.
+   */
+  val dbName: String = getDBName()
 
   /**
    * Obtains a non-empty string value.
@@ -112,12 +125,24 @@ class Settings(config: Config) {
    * @throws ConfigException.BadValue
    *     If the string associated with `key` is not an acceptable MongoDB URI.
    */
-  private def getMongoUri(key: String): MongoClientURI = {
+  private def getMongoUri(key: String): MongoClientURI =
     try {
       new MongoClientURI(subconfig.getString(key))
     } catch {
       case e: IllegalArgumentException =>
         throw new ConfigException.BadValue(subconfig.origin(), key, e.getMessage())
     }
-  }
+
+  /**
+   * Obtains the database name.
+   *
+   * This method must be called after `mongoUri` is loaded.
+   *
+   * @throws ConfigException.Missing
+   *     If the database name is in neither `mongoUri` nor the `db-name` field.
+   * @throws ConfigException.WrongType
+   *     If the value associated with `db-name` is not a string.
+   */
+  private def getDBName(): String =
+    Option(mongoUri.getDatabase()).getOrElse(subconfig.getString("db-name"))
 }

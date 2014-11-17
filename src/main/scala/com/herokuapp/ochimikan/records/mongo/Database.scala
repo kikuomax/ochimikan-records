@@ -12,10 +12,12 @@ import com.mongodb.casbah.commons.MongoDBObject
  * @constructor
  * @param client
  *     The '''MongoDB''' client connecting to the score server.
+ * @param dbName
+ *     The name of the database to connect to.
  */
-class Database(client: MongoClient) extends records.Database {
+class Database(client: MongoClient, dbName: String) extends records.Database {
   // the database
-  private[mongo] val database = client("mikan")
+  private[mongo] val database = client(dbName)
   // the score collection
   private[mongo] val scoreCollection = database("scores")
 

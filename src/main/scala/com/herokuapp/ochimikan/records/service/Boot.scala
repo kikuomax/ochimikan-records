@@ -27,7 +27,7 @@ object Boot extends App {
     val client = MongoClient(settings.mongoUri)
 
     def resolveDatabase(implicit executionContext:ExecutionContext) =
-      Future { new mongo.Database(client) }
+      Future { new mongo.Database(client, settings.dbName) }
   }
 
   // create and start our service actor

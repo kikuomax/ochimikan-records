@@ -15,6 +15,9 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings, ${valid2.config}
   Should  ${beExpected(valid2)}
 
+  The following Settings, ${valid3.config}
+  Should  ${beExpected(valid3)}
+
   The following Settings missing the root, ${missingRoot}
   Should throw ConfigException.Missing  ${expectMissing(missingRoot)}
 
@@ -30,6 +33,9 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings missing the mongo-uri, ${missingMongoUri}
   Should throw ConfigException.Missing  ${expectMissing(missingMongoUri)}
 
+  The following Settings missing the database name, ${missingDBName}
+  Should throw ConfigException.Missing  ${expectMissing(missingDBName)}
+
   The following Settings with a wrong host.name, ${wrongHostName}
   Should throw ConfigException.WrongType  ${expectWrongType(wrongHostName)}
 
@@ -41,6 +47,9 @@ class SettingsSpec extends Specification { def is = s2"""
 
   The following Settings with a wrong mongo-uri, ${wrongMongoUri}
   Should throw ConfigException.WrongType  ${expectWrongType(wrongMongoUri)}
+
+  The following Settings with a wrong db-name, ${wrongDBName}
+  Should throw ConfigException.WrongType  ${expectWrongType(wrongDBName)}
 
   The following Settings with an empty host.name, ${emptyHostName}
   Should throw ConfigException.BadValue  ${expectBadValue(emptyHostName)}
@@ -64,6 +73,7 @@ have hostName  = ${settings.hostName}            ${settings.expectHostName}
 have hostPort  = ${settings.hostPort.toString}   ${settings.expectHostPort}
 have secretKey = ${settings.secretKey}           ${settings.expectSecretKey}
 have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
+have dbName    = ${settings.dbName}              ${settings.expectDBName}
 """
 
   // Expects a ConfigException.Missing thrown
@@ -86,11 +96,13 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }""",
     hostName  = "127.0.0.1",
     hostPort  = 9090,
     secretKey = "xyz123",
-    mongoUri  = "mongodb://127.0.0.1:27017/"
+    mongoUri  = "mongodb://127.0.0.1:27017/",
+    dbName    = "mikan"
   )
 
   val valid2 = ValidSettings("""
@@ -98,12 +110,28 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.name  = records.ochimikan.com
       host.port  = 4649
       secretKey  = MikanSecret
-      mongo-uri  = "mongodb://mongo.ochimikan.com:11029/"
+      mongo-uri  = "mongodb://user:password@mongo.ochimikan.com:11029/testdb"
     }""",
     hostName  = "records.ochimikan.com",
     hostPort  = 4649,
     secretKey = "MikanSecret",
-    mongoUri  = "mongodb://mongo.ochimikan.com:11029/"
+    mongoUri  = "mongodb://user:password@mongo.ochimikan.com:11029/testdb",
+    dbName    = "testdb"
+  )
+
+  val valid3 = ValidSettings("""
+    com.herokuapp.ochimikan.records.service {
+      host.name  = 127.0.0.1
+      host.port  = 9090
+      secretKey  = xyz123
+      mongo-uri  = "mongodb://127.0.0.1:27017/testdb"
+      db-name    = "mikan"
+    }""",
+    hostName  = "127.0.0.1",
+    hostPort  = 9090,
+    secretKey = "xyz123",
+    mongoUri  = "mongodb://127.0.0.1:27017/testdb",
+    dbName    = "testdb"
   )
 
   val missingRoot = """
@@ -112,6 +140,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
  
   val missingHostName = """
@@ -119,6 +148,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
  
   val missingHostPort = """
@@ -126,6 +156,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.name  = 127.0.0.1
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
  
   val missingSecretKey = """
@@ -133,6 +164,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.name  = 127.0.0.1
       host.port  = 9090
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
  
   val missingMongoUri = """
@@ -140,6 +172,15 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.name  = 127.0.0.1
       host.port  = 9090
       secretKey  = xyz123
+      db-name    = "mikan"
+    }"""
+
+  val missingDBName = """
+    com.herokuapp.ochimikan.records.service {
+      host.name  = 127.0.0.1
+      host.port  = 9090
+      secretKey  = xyz123
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
   val wrongHostName = """
@@ -148,6 +189,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val wrongHostPort = """
@@ -156,6 +198,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = PORT
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val wrongSecretKey = """
@@ -164,6 +207,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = { value = secret }
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val wrongMongoUri = """
@@ -172,6 +216,16 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = { uri = "mongodb://127.0.0.1:27017" }
+      db-name    = "mikan"
+    }"""
+
+  val wrongDBName = """
+    com.herokuapp.ochimikan.records.service {
+      host.name  = 127.0.0.1
+      host.port  = 9090
+      secretKey  = xyz123
+      mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = [ "mikan" ]
     }"""
 
   val emptyHostName = """
@@ -180,6 +234,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val hostPort0 = """
@@ -188,6 +243,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 0
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val hostPort65536 = """
@@ -196,6 +252,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 65536
       secretKey  = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val emptySecretKey = """
@@ -204,6 +261,7 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = ""
       mongo-uri  = "mongodb://127.0.0.1:27017/"
+      db-name    = "mikan"
     }"""
 
   val badMongoUri = """
@@ -212,6 +270,16 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
       host.port  = 9090
       secretKey  = xyz123
       mongo-uri  = "127.0.0.1:27017"
+      db-name    = "mikan"
+    }"""
+
+  val doubleDBNames = """
+    com.herokuapp.ochimikan.records.service {
+      host.name  = 127.0.0.1
+      host.port  = 9090
+      secretKey  = xyz123
+      mongo-uri  = "mongodb://127.0.0.1:27017/testdb"
+      db-name    = "mikan"
     }"""
 
   /** A valid settings. */
@@ -220,7 +288,8 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
     hostName: String,
     hostPort: Int,
     secretKey: String,
-    mongoUri: String)
+    mongoUri: String,
+    dbName: String)
   {
     val settings = new Settings(ConfigFactory.parseString(config))
     // expectations
@@ -228,5 +297,6 @@ have mongoUri  = ${settings.mongoUri}            ${settings.expectMongoUri}
     def expectHostPort  = settings.hostPort must_== hostPort
     def expectSecretKey = settings.secretKey must_== secretKey
     def expectMongoUri  = settings.mongoUri.getURI() must_== mongoUri
+    def expectDBName    = settings.dbName must_== dbName
   }
 }
