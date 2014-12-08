@@ -18,7 +18,7 @@ import java.util.Date
  *     - or if `data("date")` is not a `Date`
  * @throws IllegalArgumentException
  *     - If `data("value")` is an `Int` but negative,
- *     - or if `data("level")` is an `Int` but < 1
+ *     - or if `data("level")` is an `Int` but negative.
  */
 class Score(data: MongoDBObject) extends records.Score {
   override val value  = data.as[Int]("value")
@@ -28,5 +28,5 @@ class Score(data: MongoDBObject) extends records.Score {
 
   // checks validity
   require(value >= 0, s"value must be >= 0 but $value")
-  require(level >= 1, s"level must be >= 1 but $level")
+  require(level >= 0, s"level must be >= 0 but $level")
 }

@@ -32,6 +32,10 @@ import scala.concurrent.duration.DurationInt
 import scala.language.implicitConversions
 import spray.http._
 import MediaTypes._
+import spray.http.HttpHeaders.{
+  `Access-Control-Allow-Headers`,
+  `Access-Control-Allow-Origin`
+}
 import spray.httpx.SprayJsonSupport
 import spray.json.CollectionFormats
 import spray.routing._
@@ -91,9 +95,18 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  *
  * ==RESTful API==
  *
- * ===GET /record===
+ * ===GET /record?from=from&to=to===
  *
  * Returns a list of scores.
+ *
+ * ====Parameters====
+ *
+ *  - `from` (Int >= 0, optional):
+ *    Scores will be loaded from this index (Inclusive).
+ *    If omitted, scores will be loaded from the beginning.
+ *  - `to` (Int >= 0, optional):
+ *    Scores will be loaded until this index (Exclusive).
+ *    If omitted, scores will be loaded until the end.
  *
  * ====Response====
  *
@@ -115,20 +128,30 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  * `scores` is an array of `score object`s.
  * They are sorted in descending order.
  *
- * A `score object` has properties `value`, `level`, `player` and `date`.
+ * A `score object` has the following properties,
+ *  - `value`
+ *  - `level`
+ *  - `player`
+ *  - `date`
  *
  * `value` is the value of the score. An integer >= 0.
  *
- * `level` is the level at which the score was achieved. An integer >= 1.
+ * `level` is the level at which the score was achieved. An integer >= 0.
  *
  * `player` is the name of the player who achieved the score. A string.
  *
  * `date` is the date when the score was achieved.
  * The number of seconds since January 1, 1970, 00:00:00 GMT. 
  *
- * ===POST /record===
+ * If `from` > `to`, `scores` will be an empty.
+ *
+ * ===POST /record?from=from&to=to===
  *
  * Records a specified score.
+ *
+ * ====Parameters====
+ *
+ * The same as the `GET`.
  *
  * ====Entity====
  *
@@ -193,60 +216,76 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
 
   val route =
     logAccess(Logging.InfoLevel) {
-      handleRejections(RejectionHandler.Default) {
-        path("") {
-          get {
-            respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
-              complete {
+      respondWithHeaders(`Access-Control-Allow-Origin`(AllOrigins),
+        `Access-Control-Allow-Headers`("Authorization"))
+      {
+        handleRejections(RejectionHandler.Default) {
+          path("") {
+            get {
+              respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
+                complete {
 <html>
   <body>
     <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>!</h1>
   </body>
 </html>
-              }
-            }
-          }
-        } ~
-        path("authenticate") {
-          // an experimental authenticator
-          def authenticator(userpass: Option[UserPass]) =
-            Future {
-              userpass flatMap {
-                case up if up.user == "guest" && up.pass == "mikan" =>
-                  log.info(s"event=login attempt\tuser=${up.user}\tresult=success")
-                  Some(up)
-                case up =>
-                  log.info(s"event=login attempt\tuser=${up.user}\tresult=failure")
-                  None
-              }
-            }
-
-          authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) {
-            complete(_)
-          }
-        } ~
-        path("record") {
-          val dbQuery = query.Database()
-          get {
-            onSuccess(dbQuery.scores.?) {
-              complete(_)
-            }
-          } ~
-          post {
-            def canRegisterScore(claim: JSONObject) =
-              Option(claim.get("sub")) flatMap {
-                case user: String => Some(user)
-                case _            => None
-              }
-
-            authorizeToken(verifyNotExpired && canRegisterScore) { user =>
-              entity(as[Score]) { score =>
-                onSuccess(dbQuery.?) { db =>
-                  db.addScore(score)
-                  complete(db.scores)
                 }
               }
             }
+          } ~
+          path("authenticate") {
+            // an experimental authenticator
+            def authenticator(userpass: Option[UserPass]) =
+              Future {
+                userpass flatMap {
+                  case up if up.user == "guest" && up.pass == "mikan" =>
+                    log.info(s"event=login attempt\tuser=${up.user}\tresult=success")
+                    Some(up)
+                  case up =>
+                    log.info(s"event=login attempt\tuser=${up.user}\tresult=failure")
+                    None
+                }
+              }
+
+            authenticate(BasicAuth(jwtAuthenticator(authenticator _), "OchiMikan Records")) {
+              complete(_)
+            }
+          } ~
+          path("record") {
+            val dbQuery = query.Database()
+            parameters('from.as[Int].?, 'to.as[Int].?) { (from, to) =>
+              get {
+                onSuccess(dbQuery.scores(from, to).?) {
+                  complete(_)
+                }
+              } ~
+              post {
+                def canRegisterScore(claim: JSONObject) =
+                  Option(claim.get("sub")) flatMap {
+                    case user: String => Some(user)
+                    case _            => None
+                  }
+
+                authorizeToken(verifyNotExpired && canRegisterScore) { user =>
+                  entity(as[Score]) { score =>
+                    onSuccess(dbQuery.?) { db =>
+                      db.addScore(score)
+                      complete(db.scores(from, to))
+                    }
+                  }
+                }
+              } ~
+              options {
+                // allows a "Content-Type" header
+                respondWithHeader(`Access-Control-Allow-Headers`("Content-Type")) {
+                  complete("")
+                }
+              }
+            }
+          } ~
+          options {
+            // OPTIONS requests always succeed
+            complete("")
           }
         }
       }

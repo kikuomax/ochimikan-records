@@ -27,7 +27,8 @@ class Database(client: MongoClient, dbName: String) extends records.Database {
    * @throws DatabaseException
    *     If scores in the database are corrupted.
    */
-  override def scores: ScoreList = new ScoreList(this)
+  override def scores(from: Option[Int], to: Option[Int]): ScoreList =
+    new ScoreList(this, from, to)
 
   /**
    * ''mongo.Database specific behavior.''

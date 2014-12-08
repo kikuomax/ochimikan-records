@@ -47,16 +47,38 @@ trait Query {
     override def request(implicit executionContext: ExecutionContext):
       Future[records.Database] = resolveDatabase
 
-    /** Returns a query for the [[ScoreList]] in this database. */
-    def scores: ScoreList = ScoreList(this)
+    /**
+     * Returns a query for the [[ScoreList]] in this database.
+     *
+     * @param from
+     *     The index from which scores are to be queried.
+     *     If `None`, scores will be queried from the beginning.
+     * @param to
+     *     The index util which scores are to be queried.
+     *     If `None`, scores will be queried until the end.
+     */
+    def scores(from: Option[Int], to: Option[Int]): ScoreList =
+      ScoreList(this, from, to)
   }
 
-  /** A query for a [[ScoreList]]. */
-  case class ScoreList(database: Database)
+  /**
+   * A query for a [[ScoreList]].
+   *
+   * @constructor
+   * @param database
+   *     The query for the database to be accessed.
+   * @param from
+   *     The index from which scores are to be queried.
+   *     If `None`, scores will be queried from the beginning.
+   * @param to
+   *     The index until which scores are to be queried.
+   *     If `None`, scores will be queried until the end.
+   */
+  case class ScoreList(database: Database, from: Option[Int], to: Option[Int])
     extends Queryable[records.ScoreList]
   {
     /** Resolves this score list. */
     override def request(implicit executionContext: ExecutionContext) =
-      database.? map { _.scores }
+      database.? map { _.scores(from, to) }
   }
 }

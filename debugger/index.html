@@ -20,6 +20,8 @@
             self.user     = ko.observable('');
             self.password = ko.observable('');
             self.score  = ko.observable(0);
+            self.from = ko.observable(0);
+            self.to   = ko.observable(10);
             self.scores = ko.observableArray([]);
             self.token = ko.observable('');
             self.headerPart = ko.computed(function () {
@@ -62,8 +64,9 @@
                 });
             };
             self.getScores = function () {
+                var parameters = requestParameters();
                 $.ajax({
-                    url:         self.baseUrl() + '/record',
+                    url:         self.baseUrl() + '/record' + parameters,
                     type:        'GET',
                     dataType:    'text',
                     processData: false,
@@ -84,6 +87,7 @@
                 });
             };
             self.postScore = function () {
+                var parameters = requestParameters();
                 self.postResponse('');
                 var data = {
                     value:  Number(self.score()),
@@ -92,7 +96,7 @@
                     date:   Math.round(new Date().getTime() / 1000)
                 };
                 $.ajax({
-                    url:         self.baseUrl() + '/record',
+                    url:         self.baseUrl() + '/record' + parameters,
                     type:        'POST',
                     contentType: 'application/json',
                     dataType:    'text',
@@ -125,6 +129,11 @@
                 return { 'Authorization': 'Bearer ' + self.token() };
             }
 
+            // returns request parameters
+            function requestParameters() {
+                return '?from=' + self.from() + '&to=' + self.to();
+            }
+
             // updates the score list
             function updateScores(scores) {
                 self.scores.removeAll();
@@ -153,7 +162,7 @@
  <div class="score-form">
     <h4>Send Score</h4>
     <form data-bind="submit: postScore">
-      <label for="score">
+      <label for="score">Score:</label>
       <input type="text" id="score" style="text-align: right"
              data-bind="value: score">
       <input type="submit">
@@ -162,6 +171,12 @@
   </div>
   <div class="score-list">
     <form data-bind="submit: getScores">
+      <label for="from">From:</label>
+      <input type="text" id="from" style="text-align: right"
+             data-bind="value: from">
+      <label for="to">To:</label>
+      <input type="text" id="to" style="text-align: right"
+             data-bind="value: to">
       <input type="submit" value="Reload">
     </form>
     <table>

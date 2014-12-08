@@ -30,6 +30,9 @@ object Score {
    *     The name of the player who achieved the score.
    * @param date
    *     The date when the score was achieved.
+   * @throws IllegalArgumentException
+   *     - If `value` < 0,
+   *     - or if `level` < 0.
    */
   def apply(value: Int, level: Int, player: String, date: Date): Score =
     RawScore(value, level, player, date)
@@ -84,6 +87,13 @@ object Score {
  *     The name of the player who achieved this score.
  * @param date
  *     The date when this score was achieved.
+ * @throws IllegalArgumentException
+ *     - If `value` < 0,
+ *     - or if `level` < 0.
  */
 case class RawScore(value: Int, level: Int, player: String, date: Date)
   extends Score
+{
+  require(value >= 0, s"value must be >= 0 but $value")
+  require(level >= 0, s"level must be >= 0 but $level")
+}
