@@ -97,7 +97,7 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  *
  * ===GET /record?from=from&to=to===
  *
- * Returns a list of scores.
+ * Returns a list of scores in a specified range.
  *
  * ====Parameters====
  *
@@ -167,6 +167,10 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  * }}}
  * `value`, `level`, `player` and `date` corresponds to those of `GET /record`.
  *
+ * ====Response====
+ *
+ * The same JSON object as what a `GET` request returns.
+ *
  * ===GET /authenticate===
  *
  * Does Basic authentication and returns an authorized token.
@@ -217,7 +221,7 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
   val route =
     logAccess(Logging.InfoLevel) {
       respondWithHeaders(`Access-Control-Allow-Origin`(AllOrigins),
-        `Access-Control-Allow-Headers`("Authorization"))
+        `Access-Control-Allow-Headers`("Authorization", "Content-Type"))
       {
         handleRejections(RejectionHandler.Default) {
           path("") {
@@ -268,17 +272,12 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
 
                 authorizeToken(verifyNotExpired && canRegisterScore) { user =>
                   entity(as[Score]) { score =>
+                    log.info(s"event=score posted\tuser=$user")
                     onSuccess(dbQuery.?) { db =>
                       db.addScore(score)
                       complete(db.scores(from, to))
                     }
                   }
-                }
-              } ~
-              options {
-                // allows a "Content-Type" header
-                respondWithHeader(`Access-Control-Allow-Headers`("Content-Type")) {
-                  complete("")
                 }
               }
             }
