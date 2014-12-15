@@ -60,7 +60,7 @@ class SettingsSpec extends Specification { def is = s2"""
   The following Settings with host.port = 65536, ${hostPort65536}
   Should throw ConfigException.BadValue  ${expectBadValue(hostPort65536)}
 
-  The following Settings with an empty secretKey, ${emptySecretKey}
+  The following Settings with an empty secret-key, ${emptySecretKey}
   Should throw ConfigException.BadValue  ${expectBadValue(emptySecretKey)}
 
   The following Settings with a bad mongo-uri, ${badMongoUri}
@@ -94,7 +94,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }""",
@@ -109,7 +109,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = records.ochimikan.com
       host.port  = 4649
-      secretKey  = MikanSecret
+      secret-key = MikanSecret
       mongo-uri  = "mongodb://user:password@mongo.ochimikan.com:11029/testdb"
     }""",
     hostName  = "records.ochimikan.com",
@@ -123,7 +123,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/testdb"
       db-name    = "mikan"
     }""",
@@ -138,7 +138,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     unknown.settings {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -146,7 +146,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
   val missingHostName = """
     com.herokuapp.ochimikan.records.service {
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -154,7 +154,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
   val missingHostPort = """
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -171,7 +171,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       db-name    = "mikan"
     }"""
 
@@ -179,7 +179,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
     }"""
 
@@ -187,7 +187,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = [ localhost ]
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -196,7 +196,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = PORT
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -205,7 +205,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = { value = secret }
+      secret-key = { value = secret }
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -214,7 +214,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = { uri = "mongodb://127.0.0.1:27017" }
       db-name    = "mikan"
     }"""
@@ -223,7 +223,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = [ "mikan" ]
     }"""
@@ -232,7 +232,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = ""
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -241,7 +241,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 0
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -250,7 +250,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 65536
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -259,7 +259,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = ""
+      secret-key = ""
       mongo-uri  = "mongodb://127.0.0.1:27017/"
       db-name    = "mikan"
     }"""
@@ -268,7 +268,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "127.0.0.1:27017"
       db-name    = "mikan"
     }"""
@@ -277,7 +277,7 @@ have dbName    = ${settings.dbName}              ${settings.expectDBName}
     com.herokuapp.ochimikan.records.service {
       host.name  = 127.0.0.1
       host.port  = 9090
-      secretKey  = xyz123
+      secret-key = xyz123
       mongo-uri  = "mongodb://127.0.0.1:27017/testdb"
       db-name    = "mikan"
     }"""

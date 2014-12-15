@@ -108,6 +108,8 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  *    Scores will be loaded until this index (Exclusive).
  *    If omitted, scores will be loaded until the end.
  *
+ * It is illegal if `from` > `to`.
+ *
  * ====Response====
  *
  * A JSON object which contains an array of scores.
@@ -142,8 +144,6 @@ class ServiceActor(override val settings: Settings, override val query: Query)
  *
  * `date` is the date when the score was achieved.
  * The number of seconds since January 1, 1970, 00:00:00 GMT. 
- *
- * If `from` > `to`, `scores` will be an empty.
  *
  * ===POST /record?from=from&to=to===
  *

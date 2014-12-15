@@ -13,7 +13,7 @@ import com.typesafe.config.{
  * `com.herokuapp.ochimikan.records.service`,
  *  - `host.name`
  *  - `host.port`
- *  - `secretKey`
+ *  - `secret-key`
  *  - `mongo-uri`
  *  - `db-name` (optional)
  *
@@ -34,14 +34,14 @@ import com.typesafe.config.{
  * @throws ConfigException.WrongType
  *     - If `host.name` is not a string,
  *     - or if `host.port` is not an integer,
- *     - or if `secretKey` cannot be a string,
+ *     - or if `secret-key` cannot be a string,
  *     - or if `mongo-uri` is not a string,
  *     - or if `db-name` is specified but not a string.
  * @throws ConfigException.BadValue
  *     - If `host.name` is empty,
  *     - or if `host.port` is <= 0,
  *     - or if `host.port` is >= 65536,
- *     - or if `secretKey` is empty,
+ *     - or if `secret-key` is empty,
  *     - or if `mongo-uri` is not an acceptable MongoDB URI.
  */
 class Settings(config: Config) {
@@ -62,9 +62,9 @@ class Settings(config: Config) {
 
   /**
    * The secret key to sign authorization tokens.
-   * Associated with the key `secretKey`. Non-empty.
+   * Associated with the key `secret-key`. Non-empty.
    */
-  val secretKey: String = getNonEmpty("secretKey")
+  val secretKey: String = getNonEmpty("secret-key")
 
   /**
    * The MongoDB URI of the MongoDB server.
