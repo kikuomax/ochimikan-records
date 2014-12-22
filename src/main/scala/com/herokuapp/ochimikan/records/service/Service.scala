@@ -201,6 +201,13 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
   /** The settings of the service. */
   val settings: Settings
 
+  /** Returns an allowed origin from `settings`. */
+  private def allowedOrigin =
+    if (settings.allowedOrigin == "*")
+      AllOrigins
+    else
+      SomeOrigins(Seq(HttpOrigin(settings.allowedOrigin)))
+
   /** The query object for the database contents. */
   val query: Query
 
@@ -220,7 +227,7 @@ trait Service extends HttpService with SprayJsonSupport with CollectionFormats w
 
   val route =
     logAccess(Logging.InfoLevel) {
-      respondWithHeaders(`Access-Control-Allow-Origin`(AllOrigins),
+      respondWithHeaders(`Access-Control-Allow-Origin`(allowedOrigin),
         `Access-Control-Allow-Headers`("Authorization", "Content-Type"))
       {
         handleRejections(RejectionHandler.Default) {

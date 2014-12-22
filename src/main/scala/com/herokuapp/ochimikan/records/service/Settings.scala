@@ -14,8 +14,12 @@ import com.typesafe.config.{
  *  - `host.name`
  *  - `host.port`
  *  - `secret-key`
+ *  - `allowed-origin` (optional)
  *  - `mongo-uri`
  *  - `db-name` (optional)
+ *
+ * If `allowed-origin` is omitted or an empty string, it will be interpreted as
+ * a wildcard "*".
  *
  * If `db-name` is omitted, the database name must be included in `mongo-uri`.
  * If database names are specified in both `mongo-uri` and `db-name`, the name
@@ -35,6 +39,7 @@ import com.typesafe.config.{
  *     - If `host.name` is not a string,
  *     - or if `host.port` is not an integer,
  *     - or if `secret-key` cannot be a string,
+ *     - or if `allowed-origin` is specified but not a string,
  *     - or if `mongo-uri` is not a string,
  *     - or if `db-name` is specified but not a string.
  * @throws ConfigException.BadValue
@@ -65,6 +70,13 @@ class Settings(config: Config) {
    * Associated with the key `secret-key`. Non-empty.
    */
   val secretKey: String = getNonEmpty("secret-key")
+
+  /**
+   * The origin allowed to access the service.
+   * Associated with the key `allowed-origin`. "*" or URI.
+   * "*" if omitted or empty.
+   */
+  val allowedOrigin: String = getAllowedOrigin("allowed-origin")
 
   /**
    * The MongoDB URI of the MongoDB server.
@@ -114,6 +126,23 @@ class Settings(config: Config) {
         s"$key must be in [1, 65535] but $port")
     port
   }
+
+  /**
+   * Obtains an allowed origin.
+   *
+   * "*" if no value is associated with `key` or the value associated with `key`
+   * is an empty string.
+   *
+   * @throws ConfigException.WrongType
+   *     If the value associated with `key` is not a string.
+   */
+  private def getAllowedOrigin(key: String): String =
+    if (!subconfig.hasPath(key))
+      "*"
+    else {
+      val allowedOrigin = subconfig.getString(key)
+      if (!allowedOrigin.isEmpty) allowedOrigin else "*"
+   }
 
   /**
    * Obtains a MongoDB URI.
